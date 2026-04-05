@@ -1,0 +1,21 @@
+name: lab
+
+topology:
+  nodes:
+    t1:
+      kind: linux
+      image: ubuntu-frr:0.1
+      binds:
+        - t1.sh:/t1.sh
+      exec:
+        - /t1.sh
+    t2:
+      kind: linux
+      image: ubuntu-frr:0.1
+      binds:
+        - t2.sh:/t2.sh
+      exec:
+        - /t2.sh
+
+  links:
+    - endpoints: [ "t1:eth1", "t2:eth1" ]
