@@ -4,18 +4,24 @@ topology:
   nodes:
     t1:
       kind: linux
-      image: ubuntu-frr:0.1
+      image: alpine-frr:0.1
+      cap-add:
+        - NET_ADMIN
+        - SYS_ADMIN
       binds:
         - t1.sh:/t1.sh
-      exec:
-        - /t1.sh
+      # exec:
+      #   - /t1.sh
     t2:
       kind: linux
-      image: ubuntu-frr:0.1
+      image: alpine-frr:0.1
+      cap-add:
+        - NET_ADMIN
+        - SYS_ADMIN
       binds:
         - t2.sh:/t2.sh
-      exec:
-        - /t2.sh
+      # exec:
+      #   - /t2.sh
 
   links:
     - endpoints: [ "t1:eth1", "t2:eth1" ]
