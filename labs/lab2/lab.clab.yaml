@@ -1,0 +1,71 @@
+name: lab
+
+topology:
+  nodes:
+    spine1:
+      kind: linux
+      image: alpine-frr-switch:0.1
+      cap-add:
+        - NET_ADMIN
+        - SYS_ADMIN
+      binds:
+        - configs/daemons.sh:/daemons.sh
+        - configs/spine1.sh:/spine1.sh
+      exec:
+        - /spine1.sh
+
+    spine2:
+      kind: linux
+      image: alpine-frr-switch:0.1
+      cap-add:
+        - NET_ADMIN
+        - SYS_ADMIN
+      binds:
+        - configs/daemons.sh:/daemons.sh
+        - configs/spine2.sh:/spine2.sh
+      exec:
+        - /spine2.sh
+
+    leaf1:
+      kind: linux
+      image: alpine-frr-switch:0.1
+      cap-add:
+        - NET_ADMIN
+        - SYS_ADMIN
+      binds:
+        - configs/daemons.sh:/daemons.sh
+        - configs/leaf1.sh:/leaf1.sh
+      exec:
+        - /leaf1.sh
+
+    leaf2:
+      kind: linux
+      image: alpine-frr-switch:0.1
+      cap-add:
+        - NET_ADMIN
+        - SYS_ADMIN
+      binds:
+        - configs/daemons.sh:/daemons.sh
+        - configs/leaf2.sh:/leaf2.sh
+      exec:
+        - /leaf2.sh
+
+    leaf3:
+      kind: linux
+      image: alpine-frr-switch:0.1
+      cap-add:
+        - NET_ADMIN
+        - SYS_ADMIN
+      binds:
+        - configs/daemons.sh:/daemons.sh
+        - configs/leaf3.sh:/leaf3.sh
+      exec:
+        - /leaf3.sh
+
+  links:
+    - endpoints: [ "spine1:eth1", "leaf1:eth1" ]
+    - endpoints: [ "spine1:eth2", "leaf2:eth1" ]
+    - endpoints: [ "spine1:eth3", "leaf3:eth1" ]
+    - endpoints: [ "spine2:eth1", "leaf1:eth2" ]
+    - endpoints: [ "spine2:eth2", "leaf2:eth2" ]
+    - endpoints: [ "spine2:eth3", "leaf3:eth2" ]

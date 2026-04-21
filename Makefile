@@ -10,6 +10,7 @@ destroy:
 	containerlab destroy -t labs/$(LAB)/lab.clab.yaml
 
 inspect:
+	@echo "Current lab: $(LAB)"
 	containerlab inspect -t labs/$(LAB)/lab.clab.yaml
 
 images:
