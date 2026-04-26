@@ -28,17 +28,23 @@ ip address add 10.2.2.1/31 dev eth2
 
 ```bash
 interface ifname
+ no ip ospf passive
  ip ospf area 0.0.0.0
 ```
+
+Ospf будет отключен для всех портов и нужно отдельно включать его на всех
+необходимых портах.
 
 Устройство должно анонсироваться:
 
 ```bash
 router ospf 1
+ passive-interface default
  router-id 10.0.0.1
 ```
 
 Номер `router ospf` должен совпадать с включенным `ospfd_instances`.
+Для избежания ошибок, все интерфейсы по умолчанию будут помечены `passive-interface default`.
 
 Конфигурация остальных устройств находится в директори configs.
 
