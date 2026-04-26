@@ -62,6 +62,12 @@ deactivate
 Для трассировки пакетов можно использовать **wireshark**. Он поддерживает работу с потоком байт, от **tcpdump**. 
 Сделать это можно с помощью команды:
 
+## Ssh
+```bash
+wireshark -k -i <(sshpass -p root ssh root@clab-lab-spine1 tcpdump -U -nni eth1 -w -)
+```
+
+## Netns
 ```bash
 wireshark -k -i <(sudo ip netns exec clab-lab-spine1 tcpdump -U -nni eth1 -w -)
 ```

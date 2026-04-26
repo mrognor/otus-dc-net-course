@@ -9,6 +9,7 @@ RUN apk update; \
     frr \
     vim \
     openssh \
+    tcpdump \
     supervisor
 
 RUN ssh-keygen -A

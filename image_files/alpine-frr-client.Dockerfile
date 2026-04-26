@@ -8,6 +8,7 @@ RUN apk update; \
     apk add \
     vim \
     openssh \
+    tcpdump \
     supervisor
 
 RUN ssh-keygen -A
