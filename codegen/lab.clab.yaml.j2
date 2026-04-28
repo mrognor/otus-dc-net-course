@@ -1,0 +1,9 @@
+name: lab
+
+topology:
+  nodes:
+{%- for node in nodes %}
+    {{ node.node_name }}:
+      kind: {{ node.node_type.kind }}
+      image: {{ node.node_type.image }}
+{%- endfor %}
