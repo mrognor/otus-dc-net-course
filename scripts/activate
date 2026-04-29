@@ -1,13 +1,17 @@
-deactivate() {
-    unalias spine1
-    unalias spine2
-    unalias leaf1
-    unalias leaf2
-    unalias leaf3
+container_name_prefix="clab-lab-"
+containers_command="docker ps --filter 'name=$container_name_prefix*' --format json | jq -r .Names"
+
+gen_alias_name() {
+  echo $(echo $1 | sed "s/^$container_name_prefix//")
 }
 
-alias spine1="sshpass -p root ssh -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@clab-lab-spine1"
-alias spine2="sshpass -p root ssh -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@clab-lab-spine2"
-alias leaf1="sshpass -p root ssh -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@clab-lab-leaf1"
-alias leaf2="sshpass -p root ssh -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@clab-lab-leaf2"
-alias leaf3="sshpass -p root ssh -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@clab-lab-leaf3"
+deactivate() {
+  for container_name in $(eval $containers_command); do
+    unalias $(gen_alias_name $container_name)
+  done
+}
+
+for container_name in $(eval $containers_command); do
+  alias_name=$(gen_alias_name $container_name)
+  alias $alias_name="sshpass -p root ssh -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$container_name"
+done
