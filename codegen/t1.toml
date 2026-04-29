@@ -1,2 +1,6 @@
 node_name = "t1"
 node_type = "linux"
+
+[links.eth1]
+neigh = "s1"
+iface = "eth1"

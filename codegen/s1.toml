@@ -1,0 +1,10 @@
+node_name = "s1"
+node_type = "frr"
+
+[links.eth1]
+neigh = "t1"
+iface = "eth1"
+
+[links.eth2]
+neigh = "t2"
+iface = "eth1"
