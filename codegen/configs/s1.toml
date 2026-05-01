@@ -1,0 +1,22 @@
+node_name = "s1"
+node_type = "frr"
+# enable = false
+
+[links.eth1]
+neigh = "t1"
+iface = "eth1"
+
+[links.eth2]
+neigh = "t2"
+iface = "eth1"
+
+[linux]
+net = """
+ip link add dev br0 type bridge
+ip link set dev eth1 master br0
+ip link set dev eth2 master br0
+ip link set dev br0 up
+"""
+
+# [frr]
+# daemons = ["bfdd", "ospfd", "ospf6d"]

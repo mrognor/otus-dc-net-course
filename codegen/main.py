@@ -1,3 +1,5 @@
+import os
+import stat
 import tomllib
 from pathlib import Path
 from typing import Literal, cast, override
@@ -33,10 +35,16 @@ class ContainerlabNeighIfaceModel(BaseModel):
     iface: str
 
 
+class LinuxConfig(BaseModel):
+    net: str
+
+
 class ContainerlabNodeModel(BaseModel):
+    enable: bool = True
     node_name: str
     node_type: NodeType
     links: dict[str, ContainerlabNeighIfaceModel]
+    linux: LinuxConfig | None = None
 
     @field_serializer("node_type")
     def serialize_node_type(self, node_type: NodeType) -> dict[str, str]:
@@ -49,14 +57,19 @@ class ContainerlabNodeModel(BaseModel):
 
 
 if __name__ == "__main__":
-    nodes: list[ContainerlabNodeModel] = []
+    j2_env = Environment(loader=FileSystemLoader("templates"))
 
-    pathlist = Path(".").rglob('*.toml')
+    # Read user toml files and parse it
+    nodes: list[ContainerlabNodeModel] = []
+    pathlist = Path("configs").rglob('*.toml')
     for path in pathlist:
         with open(str(path), "rb") as data_file:
             toml_node = tomllib.load(data_file)
-            nodes.append(ContainerlabNodeModel.model_validate(toml_node))
+            clab_node = ContainerlabNodeModel.model_validate(toml_node)
+            if clab_node.enable: 
+                nodes.append(clab_node)
 
+    # Get links from user toml files
     links: dict[Link, int] = {}
     for node in nodes:
         for iface, neigh_link in node.links.items():
@@ -69,9 +82,25 @@ if __name__ == "__main__":
 
     # todo add links validation
 
-    with open("lab.clab.yaml", "w", encoding="utf-8") as clab_file:
-        env = Environment(loader=FileSystemLoader("."))
-        template_text = env.get_template("lab.clab.yaml.j2").render(
-            {"nodes": [node.model_dump() for node in nodes],
-             "links": [{"endpoint1": link.link_endpoints[0], "endpoint2": link.link_endpoints[1]} for link in links]})
+    # Prepare lab dir
+    os.makedirs("lab", exist_ok=True)
+    os.makedirs("lab/configs", exist_ok=True)
+
+    # Create containerlab topology file
+    with open("lab/lab.clab.yaml", "w", encoding="utf-8") as clab_file:
+        template_text = j2_env.get_template("lab.clab.yaml.j2").render(
+            {
+                "nodes": [node.model_dump() for node in nodes],
+                "links": [{"endpoint1": link.link_endpoints[0], "endpoint2": link.link_endpoints[1]} for link in links]
+            })
         _ = clab_file.write(template_text)
+
+    # Create container configs    
+    linux_template = j2_env.get_template("linux.sh.j2")
+
+    for node in nodes:
+        config_file_name = f"lab/configs/{node.node_name}.sh"
+        with open(config_file_name, "w", encoding="utf-8") as conf_file:
+            template_text = linux_template.render({"linux": node.linux})
+            _ = conf_file.write(template_text)
+            os.chmod(config_file_name, os.stat(config_file_name).st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)

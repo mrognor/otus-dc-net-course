@@ -4,3 +4,8 @@ node_type = "linux"
 [links.eth1]
 neigh = "s1"
 iface = "eth2"
+
+[linux]
+net = """
+ip address add 192.168.0.2/24 dev eth1
+"""

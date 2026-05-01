@@ -1,0 +1,20 @@
+container_name_prefix="clab-lab-"
+containers_command="docker ps --filter 'name=$container_name_prefix*' --format json | jq -r .Names"
+
+gen_alias_name() {
+  echo $(echo $1 | sed "s/^$container_name_prefix//")
+}
+
+deactivate() {
+  for container_name in $(eval $containers_command); do
+    unalias $(gen_alias_name $container_name)
+  done
+
+  unset -f gen_alias_name
+  unset -f deactivate
+}
+
+for container_name in $(eval $containers_command); do
+  alias_name=$(gen_alias_name $container_name)
+  alias $alias_name="sshpass -p root ssh -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$container_name"
+done

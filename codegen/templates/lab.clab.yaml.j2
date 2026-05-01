@@ -10,6 +10,10 @@ topology:
         - NET_ADMIN
         - SYS_ADMIN
       {%- endif %}
+      binds:
+        - configs/{{ node.node_name }}.sh:/configs/{{ node.node_name }}.sh
+      exec:
+        - /configs/{{ node.node_name }}.sh
 {%- endfor %}
   links:
 {%- for link in links %}
