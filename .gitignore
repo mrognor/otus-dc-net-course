@@ -1,2 +1,2 @@
-clab-lab/
-.conf
+/labs/lab*/configs/
+/labs/lab*/lab.clab.yaml

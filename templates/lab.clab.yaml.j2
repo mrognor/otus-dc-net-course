@@ -1,0 +1,34 @@
+name: lab
+topology:
+  nodes:
+{%- for node in nodes %}
+    {{ node.node_name }}:
+      kind: {{ node.node_type.kind }}
+      image: {{ node.node_type.image }}
+      {%- if node.node_type.type == "frr" %}
+      cap-add:
+        - NET_ADMIN
+        - SYS_ADMIN
+      {%- endif %}
+      binds:
+        - configs/{{ node.node_name }}.ash_history:/root/.ash_history
+      {%- if node.frr is not none %}
+        - configs/{{ node.node_name }}.frr:/etc/frr/frr.conf
+      {%- endif %}
+        - configs/{{ node.node_name }}.sh:/configs/{{ node.node_name }}.sh
+      exec:
+      {#- Frr configuration #}
+      {%- for daemon in node.frr.daemons %}
+        - sed -i "s/^{{ daemon }}=no/{{ daemon }}=yes/" /etc/frr/daemons
+      {%- endfor %}
+      {#- Enable ospfd instances #}
+      {%- if node.frr is not none and node.frr.ospfd is not none and node.frr.ospfd.instances is not none and node.frr.ospfd.instances != [] %}
+        - sed -i -e '$aospfd_instances={{ node.frr.ospfd.instances | join(",") }}' /etc/frr/daemons
+      {%- endif %}
+        - supervisord -c /etc/supervisord.conf
+        - /configs/{{ node.node_name }}.sh
+{%- endfor %}
+  links:
+{%- for link in links %}
+    - endpoints: [ "{{ link.endpoint1 }}", "{{ link.endpoint2 }}" ]
+{%- endfor %}

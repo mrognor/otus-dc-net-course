@@ -9,6 +9,9 @@ deactivate() {
   for container_name in $(eval $containers_command); do
     unalias $(gen_alias_name $container_name)
   done
+
+  unset -f gen_alias_name
+  unset -f deactivate
 }
 
 for container_name in $(eval $containers_command); do
