@@ -1,0 +1,60 @@
+node_name = "leaf3"
+node_type = "frr"
+
+[links.eth1]
+neigh = "spine1"
+iface = "eth3"
+
+[links.eth2]
+neigh = "spine2"
+iface = "eth3"
+
+[linux]
+net = """
+ip route del default
+
+# Loopbacks
+ip link add dev loopback0 type dummy
+ip address add 10.0.0.3/32 dev loopback0
+
+# P2p links to spines
+ip address add 10.2.1.5/31 dev eth1
+ip address add 10.2.2.5/31 dev eth2
+"""
+
+[frr]
+daemons = ["bfdd", "isisd"]
+
+net = """
+interface eth1
+ ip router isis UNDERLAY
+ isis bfd
+ isis circuit-type level-1
+ isis network point-to-point
+exit
+!
+interface eth2
+ ip router isis UNDERLAY
+ isis bfd
+ isis circuit-type level-1
+ isis network point-to-point
+exit
+!
+interface loopback0
+ ip router isis UNDERLAY
+exit
+!
+router isis UNDERLAY
+ is-type level-1
+ net 49.0001.0100.0000.0003.00
+ domain-password md5 ABCDEFGHIJK
+exit
+!
+bfd
+ peer 10.0.0.3
+ exit
+ !
+exit
+!
+end
+"""

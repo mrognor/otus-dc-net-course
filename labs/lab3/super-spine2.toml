@@ -1,0 +1,60 @@
+node_name = "super-spine2"
+node_type = "frr"
+
+[links.eth1]
+neigh = "super-spine1"
+iface = "eth1"
+
+[links.eth2]
+neigh = "spine11"
+iface = "eth4"
+
+[linux]
+net = """
+# Loopbacks
+ip link add dev loopback0 type dummy
+ip address add 20.0.2.0/32 dev loopback0
+
+# P2p link to super-spine2
+ip address add 20.2.0.1/31 dev eth1
+
+# P2p link to spine2
+ip address add 20.2.0.4/31 dev eth2
+"""
+
+[frr]
+daemons = ["bfdd", "isisd"]
+
+net = """
+interface eth1
+ ip router isis UNDERLAY
+ isis bfd
+ isis circuit-type level-2-only
+ isis network point-to-point
+exit
+!
+interface eth2
+ ip router isis UNDERLAY
+ isis bfd
+ isis circuit-type level-2-only
+ isis network point-to-point
+exit
+!
+interface loopback0
+ ip router isis UNDERLAY
+exit
+!
+router isis UNDERLAY
+ is-type level-2-only
+ net 49.0003.0200.0000.2000.00
+ domain-password md5 ABCDEFGHIJK
+exit
+!
+bfd
+ peer 20.0.2.0
+ exit
+ !
+exit
+!
+end
+"""
