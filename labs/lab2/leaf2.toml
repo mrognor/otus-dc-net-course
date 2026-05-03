@@ -1,0 +1,53 @@
+node_name = "leaf2"
+node_type = "frr"
+
+[links.eth1]
+neigh = "spine1"
+iface = "eth2"
+
+[links.eth2]
+neigh = "spine2"
+iface = "eth2"
+
+[linux]
+net = """
+# Loopbacks
+ip link add dev loopback0 type dummy
+ip address add 10.0.0.2/32 dev loopback0
+
+# P2p links to spines
+ip address add 10.2.1.3/31 dev eth1
+ip address add 10.2.2.3/31 dev eth2
+"""
+
+[frr]
+daemons = ["bfdd", "ospfd", "ospf6d"]
+ospfd.instances = [1] 
+
+net = """
+interface loopback0
+ no ip ospf passive
+ ip ospf bfd
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 ABCDEFGHIJK
+ ip ospf area 0.0.0.0
+interface eth1
+ no ip ospf passive
+ ip ospf bfd
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 ABCDEFGHIJK
+ ip ospf area 0.0.0.0
+interface eth2
+ no ip ospf passive
+ ip ospf bfd
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 ABCDEFGHIJK
+ ip ospf area 0.0.0.0
+router ospf 1
+ passive-interface default
+ router-id 10.0.0.2
+bfd
+ peer 10.0.0.2
+  no shutdown
+end
+"""
