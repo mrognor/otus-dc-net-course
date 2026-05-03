@@ -1,0 +1,21 @@
+node_name = "leaf3"
+node_type = "linux"
+
+[links.eth1]
+neigh = "spine1"
+iface = "eth3"
+
+[links.eth2]
+neigh = "spine2"
+iface = "eth3"
+
+[linux]
+net = """
+# Loopbacks
+ip link add dev loopback0 type dummy
+ip address add 10.0.0.3/32 dev loopback0
+
+# P2p links to spines
+ip address add 10.2.1.5/31 dev eth1
+ip address add 10.2.2.5/31 dev eth2
+"""
