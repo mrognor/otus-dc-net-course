@@ -25,29 +25,38 @@ daemons = ["bfdd", "ospfd", "ospf6d"]
 ospfd.instances = [1] 
 
 net = """
-interface loopback0
- no ip ospf passive
- ip ospf bfd
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 ABCDEFGHIJK
- ip ospf area 0.0.0.0
 interface eth1
- no ip ospf passive
- ip ospf bfd
+ ip ospf 1 area 0.0.0.0
  ip ospf authentication message-digest
+ ip ospf bfd
  ip ospf message-digest-key 1 md5 ABCDEFGHIJK
- ip ospf area 0.0.0.0
+ ip ospf network point-to-point
+ no ip ospf passive
+exit
+!
 interface eth2
- no ip ospf passive
- ip ospf bfd
+ ip ospf 1 area 0.0.0.0
  ip ospf authentication message-digest
+ ip ospf bfd
  ip ospf message-digest-key 1 md5 ABCDEFGHIJK
- ip ospf area 0.0.0.0
+ ip ospf network point-to-point
+ no ip ospf passive
+exit
+!
+interface loopback0
+ ip ospf 1 area 0.0.0.0
+exit
+!
 router ospf 1
+ ospf router-id 10.0.0.2
  passive-interface default
- router-id 10.0.0.2
+exit
+!
 bfd
  peer 10.0.0.2
-  no shutdown
+ exit
+ !
+exit
+!
 end
 """

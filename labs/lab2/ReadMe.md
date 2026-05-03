@@ -1,10 +1,12 @@
 # Underlay. OSPF
 
 ## Схема сети
-![schema](lab2.1.png)
+![schema](images/lab2.1.png)
+
+Все конфиги лежат рядом с этим файлом в *toml* формате.
 
 ## Конфигурация FRR
-На каждом устройстве включены следующие демоны **frr**: ospfd, ospfd6  
+На каждом устройстве включены следующие демоны **frr**: bfdd, ospfd, ospfd6  
 Также включен *ospfd-инстанс*: `ospfd_instances=1`
 
 ## Настройка системы (Leaf1)
@@ -47,8 +49,6 @@ router ospf 1
 Номер `router ospf` должен совпадать с включенным `ospfd_instances`.
 Для избежания ошибок, все интерфейсы по умолчанию будут помечены `passive-interface default`.
 
-Конфигурация остальных устройств находится в директори configs.
-
 #### Bfd
 Для ускорения сходимости *ospf* включается **bfd**.
 
@@ -56,7 +56,6 @@ router ospf 1
 ```bash
 bfd
  peer 10.0.1.0
-  no shutdown
 ```
 
 *peer* совпадает с *router-id* из *ospf*.
@@ -72,18 +71,18 @@ interface eth1
 #### OSPF
 На лифе в **ospf** видны лупбеки обоих спайнов в корректном состоянии:
 
-![leaf1 ospf](lab2.2.png)
+![leaf1 ospf](images/lab2.2.png)
 
 * `10.0.1.0` - лупбек **spine1**
 * `10.0.2.0` - лупбек **spine2**
 
 И они доступны:  
-![ping to loopbacks](lab2.3.png)
+![ping to loopbacks](images/lab2.3.png)
 
 #### Маршруты
 Также появились маршруты до других лифов:
 
-![routes](lab2.4.png)
+![routes](images/lab2.4.png)
 
 * Желтым выделены маршруты `10.2.1.0` и `10.2.2.0` это линки спайнов, которые подключены к **leaf1**.
 * Зеленым выделены подсети, доступные через next hop **spine1**. Голубым указано через что доступны эти подсети.
@@ -91,11 +90,11 @@ interface eth1
 
 Оба спайна доступны:
 
-![ping to spines](lab2.5.png)
+![ping to spines](images/lab2.5.png)
 
 Через спайны доступны и лифы:
 
-![ping to leaf2](lab2.6.png)
+![ping to leaf2](images/lab2.6.png)
 
 Содержимое LSDB на Leaf1:  
-![leaf1 lsbd](lab2.7.png)
+![leaf1 lsbd](images/lab2.7.png)
