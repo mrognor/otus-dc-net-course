@@ -21,9 +21,18 @@ topology:
       {%- for daemon in node.frr.daemons %}
         - sed -i "s/^{{ daemon }}=no/{{ daemon }}=yes/" /etc/frr/daemons
       {%- endfor %}
-      {#- Enable ospfd instances #}
+      {#-   Enable ospfd instances #}
       {%- if node.frr is not none and node.frr.ospfd is not none and node.frr.ospfd.instances is not none and node.frr.ospfd.instances != [] %}
         - sed -i -e '$aospfd_instances={{ node.frr.ospfd.instances | join(",") }}' /etc/frr/daemons
+      {%- endif %}
+      {#- Daemons configuration #}
+      {#-   Lldp enable #}
+      {%- if node.lldpd.enable == true %}
+        - ln -sf /etc/supervisor.d.configs/lldpd.ini /etc/supervisor.d/lldpd.ini
+      {%- endif %}
+      {#-   Frr enable #}
+      {%- if node.frr is not none and node.frr.enable == true %}
+        - ln -sf /etc/supervisor.d.configs/frr.ini /etc/supervisor.d/frr.ini
       {%- endif %}
         - supervisord -c /etc/supervisord.conf
         - /configs/{{ node.node_name }}.sh

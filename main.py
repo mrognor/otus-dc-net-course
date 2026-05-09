@@ -7,11 +7,11 @@ from jinja2 import Environment, FileSystemLoader
 
 from pydantic import BaseModel, field_serializer
 
-configs_path = "labs/lab3"
-lab_path = "labs/lab3"
+configs_path = "labs/lab4"
+lab_path = "labs/lab4"
 
 NodeType = Literal["linux", "frr"]
-FrrDaemon = Literal["bfdd", "ospfd", "ospf6d", "isisd"]
+FrrDaemon = Literal["bfdd", "ospfd", "ospf6d", "isisd", "bgpd"]
 
 
 class Link:
@@ -48,9 +48,14 @@ class OspfdFrrConfig(BaseModel):
 
 
 class FrrConfig(BaseModel):
+    enable: bool = True
     net: str
     daemons: list[FrrDaemon]
     ospfd: OspfdFrrConfig | None = None
+
+
+class LldpdConfig(BaseModel):
+    enable: bool = True
 
 
 class ContainerlabNodeModel(BaseModel):
@@ -58,6 +63,7 @@ class ContainerlabNodeModel(BaseModel):
     node_name: str
     node_type: NodeType
     links: dict[str, ContainerlabNeighIfaceModel]
+    lldpd: LldpdConfig = LldpdConfig()
     linux: LinuxConfig | None = None
     frr: FrrConfig | None = None
 
