@@ -1,0 +1,43 @@
+node_name = "leaf1"
+node_type = "frr"
+
+[links.eth1]
+neigh = "spine1"
+iface = "eth1"
+
+[links.eth2]
+neigh = "spine2"
+iface = "eth1"
+
+[linux]
+net = """
+# Loopbacks
+ip link add dev loopback0 type dummy
+ip address add 10.0.0.1/32 dev loopback0
+
+# P2p links to leafs
+ip address add 10.2.1.1/31 dev eth1
+ip address add 10.2.2.1/31 dev eth2
+
+# Client link
+ip address add 192.168.10.1/24 dev eth3
+"""
+
+[frr]
+daemons = ["bgpd"]
+
+net = """
+router bgp 65000
+ bgp router-id 10.0.0.1
+ neighbor 10.2.1.0 remote-as internal
+ neighbor 10.2.2.0 remote-as internal
+ !
+ address-family ipv4 unicast
+  network 10.0.0.1/32
+  redistribute connected
+  maximum-paths ibgp 4
+ exit-address-family
+exit
+!
+end
+"""

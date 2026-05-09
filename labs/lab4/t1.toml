@@ -1,0 +1,12 @@
+node_name = "t1"
+node_type = "linux"
+
+[links.eth1]
+neigh = "leaf1"
+iface = "eth3"
+
+[linux]
+net = """
+ip address add 192.168.10.2/24 dev eth1
+ip route replace default via 192.168.10.1 dev eth1
+"""
