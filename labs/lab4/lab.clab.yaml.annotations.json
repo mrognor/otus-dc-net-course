@@ -793,10 +793,10 @@
       "level": "0",
       "position": {
         "x": 1005.346885863419,
-        "y": 316.6913131054215
+        "y": 318.6913131054215
       },
-      "width": 1040,
-      "height": 602,
+      "width": 969,
+      "height": 600,
       "backgroundColor": "rgba(100, 100, 255, 0.1)",
       "backgroundOpacity": 0,
       "borderColor": "#d4d4d4",
