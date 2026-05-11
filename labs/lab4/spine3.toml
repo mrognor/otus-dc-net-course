@@ -33,7 +33,7 @@ ip address add 10.2.3.4/31 dev eth3
 """
 
 [frr]
-daemons = ["bgpd"]
+daemons = ["bgpd", "bfdd"]
 
 net = """
 route-map ALLOW permit 1

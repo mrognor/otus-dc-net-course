@@ -28,7 +28,7 @@ ip address add 10.2.1.4/31 dev eth3
 """
 
 [frr]
-daemons = ["bgpd"]
+daemons = ["bgpd", "bfdd"]
 
 net = """
 router bgp 65000

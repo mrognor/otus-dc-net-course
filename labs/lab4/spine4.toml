@@ -26,7 +26,7 @@ ip address add 10.2.4.4/31 dev eth3
 """
 
 [frr]
-daemons = ["bgpd"]
+daemons = ["bgpd", "bfdd"]
 
 net = """
 route-map RM_AS_RANGE permit 1
