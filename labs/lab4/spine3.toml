@@ -1,0 +1,54 @@
+node_name = "spine3"
+node_type = "frr"
+
+[links.eth1]
+neigh = "leaf4"
+iface = "eth1"
+
+[links.eth2]
+neigh = "leaf5"
+iface = "eth1"
+
+[links.eth3]
+neigh = "leaf6"
+iface = "eth1"
+
+[linux]
+net = """
+# Loopbacks
+ip link add dev loopback0 type dummy
+ip address add 10.0.3.0/32 dev loopback0
+
+# P2p links to leafs
+ip address add 10.2.3.0/31 dev eth1
+ip address add 10.2.3.2/31 dev eth2
+ip address add 10.2.3.4/31 dev eth3
+"""
+
+[frr]
+daemons = ["bgpd"]
+
+net = """
+route-map RM_AS_RANGE permit 1
+ match as-path PF_AS_RANGE
+exit
+!
+router bgp 65100
+ bgp router-id 10.0.3.0
+ neighbor LEAFS peer-group
+ neighbor LEAFS remote-as external
+ bgp listen range 10.0.0.0/8 peer-group LEAFS
+ !
+ address-family ipv4 unicast
+  network 10.0.3.0/32
+  redistribute connected route-map RM_AS_RANGE
+  neighbor LEAFS route-map RM_AS_RANGE in
+  neighbor LEAFS route-map RM_AS_RANGE out
+  maximum-paths 4
+ exit-address-family
+exit
+!
+bgp as-path access-list PF_AS_RANGE seq 5 permit 6510[1-9]
+!
+end
+"""
