@@ -244,8 +244,8 @@
       "id": "freeText_1778334302271",
       "text": "10.2.2.4/31",
       "position": {
-        "x": 528.6759163871038,
-        "y": 442.6041544834986
+        "x": 538.3372118768154,
+        "y": 480.28320689337414
       },
       "fontSize": 14,
       "fontColor": "#d4d4d4",
@@ -717,6 +717,37 @@
       "textDecoration": "none",
       "textAlign": "left",
       "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1778496392463",
+      "text": "20.0.0.0/31",
+      "position": {
+        "x": 540.5467622019918,
+        "y": 411.1734375932706
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial",
+      "groupId": "group-1"
+    },
+    {
+      "id": "freeText_1778496402671",
+      "text": "20.0.0.1/31",
+      "position": {
+        "x": 1181.8542407852892,
+        "y": 390.45999129134657
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
     }
   ],
   "freeShapeAnnotations": [],
@@ -744,10 +775,10 @@
       "name": "ASN 65100",
       "level": "1",
       "position": {
-        "x": 1187.168511226968,
+        "x": 1177.168511226968,
         "y": 356.9030773753142
       },
-      "width": 565,
+      "width": 575,
       "height": 190,
       "backgroundColor": "rgba(100, 100, 255, 0.1)",
       "borderColor": "#d4d4d4",
@@ -759,10 +790,10 @@
     {
       "id": "group-3",
       "name": "eBGP",
-      "level": "1",
+      "level": "0",
       "position": {
-        "x": 945.07671207149,
-        "y": 304.6535397982786
+        "x": 1005.346885863419,
+        "y": 316.6913131054215
       },
       "width": 1040,
       "height": 602,

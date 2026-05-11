@@ -13,6 +13,10 @@ iface = "eth2"
 neigh = "leaf3"
 iface = "eth2"
 
+[links.eth4]
+neigh = "spine3"
+iface = "eth4"
+
 [linux]
 net = """
 ip route del default
@@ -20,6 +24,9 @@ ip route del default
 # Loopbacks
 ip link add dev loopback0 type dummy
 ip address add 10.0.2.0/32 dev loopback0
+
+# Link to AS 65100
+ip address add 20.0.0.0/31 dev eth4
 
 # P2p links to leafs
 ip address add 10.2.2.0/31 dev eth1
@@ -31,6 +38,8 @@ ip address add 10.2.2.4/31 dev eth3
 daemons = ["bgpd"]
 
 net = """
+route-map ALLOW permit 1
+!
 router bgp 65000
  bgp router-id 10.0.2.0
  neighbor LEAFS peer-group
@@ -41,11 +50,17 @@ router bgp 65000
  neighbor 10.2.2.1 peer-group LEAFS
  neighbor 10.2.2.3 peer-group LEAFS
  neighbor 10.2.2.5 peer-group LEAFS
+ neighbor 20.0.0.1 remote-as 65100
+ neighbor 20.0.0.1 bfd
+ neighbor 20.0.0.1 password dci
+ neighbor 20.0.0.1 timers 3 9
  !
  address-family ipv4 unicast
   network 10.0.2.0/32
   redistribute connected
   neighbor LEAFS route-reflector-client
+  neighbor 20.0.0.1 route-map ALLOW in
+  neighbor 20.0.0.1 route-map ALLOW out
   maximum-paths ibgp 4
  exit-address-family
 exit
