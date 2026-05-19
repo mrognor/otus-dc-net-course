@@ -11,17 +11,82 @@ iface = "eth1"
 
 [linux]
 net = """
+ip route del default
+
 # Loopbacks
 ip link add dev loopback0 type dummy
 ip address add 10.0.0.4/32 dev loopback0
 ip link set dev loopback0 up
 
-# P2p links to leafs
+# Underlay - p2p links to spines
 ip address add 10.2.3.1/31 dev eth1
 ip address add 10.2.4.1/31 dev eth2
 
+# Bridge
+ip link add br0 type bridge vlan_filtering 1 vlan_default_pvid 0
+ip link add vxlan0 type vxlan dstport 4789 local 10.0.0.4 nolearning external vnifilter
+ip link set vxlan0 master br0
+ip link set br0 up
+ip link set vxlan0 up
+bridge link set dev vxlan0 vlan_tunnel on
+
+# l2vni 110 - vlan 10
+bridge vlan add dev br0 vid 10 self
+bridge vlan add dev vxlan0 vid 10
+bridge vni add dev vxlan0 vni 110
+bridge vlan add dev vxlan0 vid 10 tunnel_info id 110
+ip link add vlan10 link br0 type vlan id 10
+ip addr add 192.168.10.251/24 dev vlan10
+ip link set vlan10 up
+
+# l2vni 120 - vlan 20
+bridge vlan add dev br0 vid 20 self
+bridge vlan add dev vxlan0 vid 20
+bridge vni add dev vxlan0 vni 120
+bridge vlan add dev vxlan0 vid 20 tunnel_info id 120
+ip link add vlan20 link br0 type vlan id 20
+ip addr add 192.168.20.251/24 dev vlan20
+ip link set vlan20 up
+
+# l2vni 130 - vlan 30
+bridge vlan add dev br0 vid 30 self
+bridge vlan add dev vxlan0 vid 30
+bridge vni add dev vxlan0 vni 130
+bridge vlan add dev vxlan0 vid 30 tunnel_info id 130
+ip link add vlan30 link br0 type vlan id 30
+ip addr add 192.168.30.251/24 dev vlan30
+ip link set vlan30 up
+
+# l2vni 140 - vlan 40
+bridge vlan add dev br0 vid 40 self
+bridge vlan add dev vxlan0 vid 40
+bridge vni add dev vxlan0 vni 140
+bridge vlan add dev vxlan0 vid 40 tunnel_info id 140
+ip link add vlan40 link br0 type vlan id 40
+ip addr add 192.168.40.251/24 dev vlan40
+ip link set vlan40 up
+
+# l2vni 150 - vlan 50
+bridge vlan add dev br0 vid 50 self
+bridge vlan add dev vxlan0 vid 50
+bridge vni add dev vxlan0 vni 150
+bridge vlan add dev vxlan0 vid 50 tunnel_info id 150
+ip link add vlan50 link br0 type vlan id 50
+ip addr add 192.168.50.251/24 dev vlan50
+ip link set vlan50 up
+
+# l2vni 160 - vlan 60
+bridge vlan add dev br0 vid 60 self
+bridge vlan add dev vxlan0 vid 60
+bridge vni add dev vxlan0 vni 160
+bridge vlan add dev vxlan0 vid 60 tunnel_info id 160
+ip link add vlan60 link br0 type vlan id 60
+ip addr add 192.168.60.251/24 dev vlan60
+ip link set vlan60 up
+
 # Client link
-ip address add 192.168.40.1/24 dev eth3
+ip link set dev eth3 master br0
+bridge vlan add vid 40 dev eth3 pvid 40 egress untagged
 """
 
 [frr]
@@ -51,6 +116,13 @@ router bgp 65101
   neighbor SPINES route-map RM_AS_RANGE in
   neighbor SPINES route-map ALLOW out
   maximum-paths 4
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  neighbor SPINES activate
+  neighbor SPINES route-map RM_AS_RANGE in
+  neighbor SPINES route-map ALLOW out
+  advertise-all-vni
  exit-address-family
 exit
 !

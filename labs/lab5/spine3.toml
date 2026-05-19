@@ -19,6 +19,8 @@ iface = "eth4"
 
 [linux]
 net = """
+ip route del default
+
 # Loopbacks
 ip link add dev loopback0 type dummy
 ip address add 10.0.3.0/32 dev loopback0
@@ -64,6 +66,16 @@ router bgp 65100
   neighbor 20.0.0.0 route-map ALLOW in
   neighbor 20.0.0.0 route-map ALLOW out
   maximum-paths 4
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  neighbor LEAFS activate
+  neighbor LEAFS route-map RM_AS_RANGE in
+  neighbor LEAFS route-map ALLOW out
+  neighbor 20.0.0.0 activate
+  neighbor 20.0.0.0 route-map ALLOW in
+  neighbor 20.0.0.0 route-map ALLOW out
+  advertise-all-vni
  exit-address-family
 exit
 !

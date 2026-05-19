@@ -53,6 +53,33 @@ ip link add vlan30 link br0 type vlan id 30
 ip addr add 192.168.30.252/24 dev vlan30
 ip link set vlan30 up
 
+# l2vni 140 - vlan 40
+bridge vlan add dev br0 vid 40 self
+bridge vlan add dev vxlan0 vid 40
+bridge vni add dev vxlan0 vni 140
+bridge vlan add dev vxlan0 vid 40 tunnel_info id 140
+ip link add vlan40 link br0 type vlan id 40
+ip addr add 192.168.40.252/24 dev vlan40
+ip link set vlan40 up
+
+# l2vni 150 - vlan 50
+bridge vlan add dev br0 vid 50 self
+bridge vlan add dev vxlan0 vid 50
+bridge vni add dev vxlan0 vni 150
+bridge vlan add dev vxlan0 vid 50 tunnel_info id 150
+ip link add vlan50 link br0 type vlan id 50
+ip addr add 192.168.50.252/24 dev vlan50
+ip link set vlan50 up
+
+# l2vni 160 - vlan 60
+bridge vlan add dev br0 vid 60 self
+bridge vlan add dev vxlan0 vid 60
+bridge vni add dev vxlan0 vni 160
+bridge vlan add dev vxlan0 vid 60 tunnel_info id 160
+ip link add vlan60 link br0 type vlan id 60
+ip addr add 192.168.60.252/24 dev vlan60
+ip link set vlan60 up
+
 # Client link
 ip link set dev eth3 master br0
 bridge vlan add vid 30 dev eth3 pvid 30 egress untagged
