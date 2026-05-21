@@ -74,21 +74,5 @@ router bgp 65000
  exit-address-family
 exit
 !
-router bgp 65000 vrf vrf10000
- !
- address-family ipv4 unicast
-  redistribute connected
- exit-address-family
- !
- address-family ipv6 unicast
-  redistribute connected
- exit-address-family
- !
- address-family l2vpn evpn
-  advertise ipv4 unicast
-  advertise ipv6 unicast
- exit-address-family
-exit
-!
 end
 """

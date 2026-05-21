@@ -32,10 +32,6 @@ ip address add 10.2.1.4/31 dev eth3
 daemons = ["bgpd", "bfdd"]
 
 net = """
-vrf vrf10000
- vni 10000
-exit-vrf
-!
 router bgp 65000
  bgp router-id 10.0.1.0
  neighbor LEAFS peer-group
@@ -57,22 +53,6 @@ router bgp 65000
  address-family l2vpn evpn
   neighbor LEAFS activate
   neighbor LEAFS route-reflector-client
- exit-address-family
-exit
-!
-router bgp 65000 vrf vrf10000
- !
- address-family ipv4 unicast
-  redistribute connected
- exit-address-family
- !
- address-family ipv6 unicast
-  redistribute connected
- exit-address-family
- !
- address-family l2vpn evpn
-  advertise ipv4 unicast
-  advertise ipv6 unicast
  exit-address-family
 exit
 !
