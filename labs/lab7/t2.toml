@@ -1,0 +1,28 @@
+node_name = "t2"
+node_type = "linux"
+
+[links.eth1]
+neigh = "leaf3"
+iface = "eth3"
+
+[links.eth2]
+neigh = "leaf4"
+iface = "eth3"
+
+[linux]
+net = """
+# ip address add 192.168.20.1/24 dev eth1
+# ip link set dev eth1 address 00:00:00:00:00:02
+
+ip link add dev bond0 type bond mode 802.3ad
+ip link set dev bond0 up
+ip link set dev eth1 down
+ip link set dev eth1 master bond0
+ip link set dev eth1 up
+ip link set dev eth2 down
+ip link set dev eth2 master bond0
+ip link set dev eth2 up
+
+ip address add 192.168.20.1/24 dev bond0
+ip route replace default via 192.168.20.253
+"""
