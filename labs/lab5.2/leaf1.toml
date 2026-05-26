@@ -1,0 +1,68 @@
+node_name = "leaf1"
+node_type = "frr"
+
+[links.eth1]
+neigh = "spine"
+iface = "eth1"
+
+[links.eth2]
+neigh = "t1"
+iface = "eth1"
+
+[linux]
+net = """
+ip route del default
+
+# Loopbacks
+ip link add dev loopback0 type dummy
+ip address add 10.0.0.1/32 dev loopback0
+ip link set dev loopback0 up
+
+# P2p link to spine
+ip address add 10.2.1.1/31 dev eth1
+
+# Bridge
+ip link add br0 type bridge vlan_filtering 1 vlan_default_pvid 0
+ip link add vxlan0 type vxlan dstport 4789 local 10.0.0.1 nolearning external vnifilter
+ip link set vxlan0 master br0
+ip link set br0 up
+ip link set vxlan0 up
+bridge link set dev vxlan0 vlan_tunnel on
+
+# l2vni 10010 - vlan 10
+bridge vlan add dev br0 vid 10 self
+bridge vlan add dev vxlan0 vid 10
+bridge vni add dev vxlan0 vni 10010
+bridge vlan add dev vxlan0 vid 10 tunnel_info id 10010
+
+# Link to client
+ip link set dev eth2 master br0
+bridge vlan add vid 10 dev eth2 pvid 10 egress untagged
+"""
+
+[frr]
+daemons = ["bgpd", "bfdd"]
+
+net = """
+router bgp 65000
+ bgp router-id 10.0.0.1
+ neighbor SPINES peer-group
+ neighbor SPINES remote-as internal
+ neighbor SPINES bfd
+ neighbor SPINES password ibgp
+ neighbor SPINES timers 1 3
+ neighbor 10.2.1.0 peer-group SPINES
+ !
+ address-family ipv4 unicast
+  network 10.0.0.1/32
+  maximum-paths ibgp 4
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  neighbor SPINES activate
+  advertise-all-vni
+ exit-address-family
+exit
+!
+end
+"""

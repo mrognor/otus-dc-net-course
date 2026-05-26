@@ -1,0 +1,12 @@
+node_name = "t2"
+node_type = "linux"
+
+[links.eth1]
+neigh = "leaf2"
+iface = "eth2"
+
+[linux]
+net = """
+ip link set address 02:00:00:00:00:02 dev eth1
+ip address add 192.168.10.2/24 dev eth1
+"""
