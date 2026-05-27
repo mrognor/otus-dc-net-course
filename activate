@@ -16,5 +16,5 @@ deactivate() {
 
 for container_name in $(eval $containers_command); do
   alias_name=$(gen_alias_name $container_name)
-  alias $alias_name="sshpass -p root ssh -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$container_name"
+  alias $alias_name="sshpass -p root ssh -4 -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR root@$container_name"
 done

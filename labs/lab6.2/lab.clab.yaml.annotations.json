@@ -1,0 +1,206 @@
+{
+  "freeTextAnnotations": [
+    {
+      "id": "freeText_1779805084282",
+      "text": "iBGP ASN 65000",
+      "position": {
+        "x": 218.0126792575303,
+        "y": 150.8732810264003
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1779805107122",
+      "text": "loopback0 10.0.1.0/32",
+      "position": {
+        "x": 366.5504032603135,
+        "y": 166.11357877053752
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1779805128666",
+      "text": "loopback0 10.0.0.1/32  \nvrf10000  \nvlan10 192.168.10.254",
+      "position": {
+        "x": 102.86662863871803,
+        "y": 310.46802511855344
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "right",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1779805142913",
+      "text": "loopback0 10.0.0.2/32  \nvrf10000  \nvlan10 192.168.20.254",
+      "position": {
+        "x": 625.7545300229949,
+        "y": 305.7019345407462
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1779805220263",
+      "text": "192.168.10.1/24  \n02:00:00:00:00:01",
+      "position": {
+        "x": 246.23085686238613,
+        "y": 484.84421759091606
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1779805239232",
+      "text": "192.168.20.1/24  \n02:00:00:00:00:02",
+      "position": {
+        "x": 523.9691955670223,
+        "y": 485.8627044468453
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1779805288427",
+      "text": "10.2.1.1/31",
+      "position": {
+        "x": 332.2568083828344,
+        "y": 320.0901116253605
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1779805303135",
+      "text": "10.2.1.0/31",
+      "position": {
+        "x": 331.5887301868753,
+        "y": 238.95032771055656
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1779805312639",
+      "text": "10.2.1.2/31",
+      "position": {
+        "x": 459.58112857217037,
+        "y": 235.85872388482477
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "freeText_1779805322263",
+      "text": "10.2.1.3/31",
+      "position": {
+        "x": 466.2689724033752,
+        "y": 324.53922769697726
+      },
+      "fontSize": 14,
+      "fontColor": "#d4d4d4",
+      "fontWeight": "normal",
+      "fontStyle": "normal",
+      "textDecoration": "none",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    }
+  ],
+  "freeShapeAnnotations": [],
+  "trafficRateAnnotations": [],
+  "groupStyleAnnotations": [],
+  "networkNodeAnnotations": [],
+  "nodeAnnotations": [
+    {
+      "id": "leaf1",
+      "position": {
+        "x": 280,
+        "y": 340
+      },
+      "labelPosition": "left",
+      "icon": "pe"
+    },
+    {
+      "id": "leaf2",
+      "position": {
+        "x": 560,
+        "y": 340
+      },
+      "labelPosition": "right",
+      "icon": "pe"
+    },
+    {
+      "id": "spine",
+      "position": {
+        "x": 420,
+        "y": 240
+      },
+      "labelPosition": "top",
+      "icon": "pe"
+    },
+    {
+      "id": "t1",
+      "position": {
+        "x": 280,
+        "y": 440
+      },
+      "icon": "client"
+    },
+    {
+      "id": "t2",
+      "position": {
+        "x": 560,
+        "y": 440
+      },
+      "icon": "client"
+    }
+  ],
+  "edgeAnnotations": [],
+  "aliasEndpointAnnotations": [],
+  "viewerSettings": {}
+}
