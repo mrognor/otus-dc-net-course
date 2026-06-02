@@ -9,9 +9,14 @@ iface = "eth3"
 neigh = "spine2"
 iface = "eth3"
 
+[links.eth3]
+neigh = "t2"
+iface = "eth1"
+
 [linux]
 net = """
 ip route del default
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
 # Loopbacks
 ip link add dev loopback0 type dummy
@@ -32,8 +37,11 @@ bridge vlan add dev vxlan0 vid 10
 bridge vni add dev vxlan0 vni 110
 bridge vlan add dev vxlan0 vid 10 tunnel_info id 110
 ip link add vlan10 link br0 type vlan id 10
-ip addr add 192.168.10.253/24 dev vlan10
 ip link set vlan10 up
+ip link add link vlan10 dev sagvlan10 type macvlan
+ip link set dev sagvlan10 address 00:00:00:01:01:01
+ip addr add 192.168.10.253/24 dev sagvlan10
+ip link set sagvlan10 up
 
 # l2vni 120 - vlan 20
 bridge vlan add dev br0 vid 20 self
@@ -41,8 +49,11 @@ bridge vlan add dev vxlan0 vid 20
 bridge vni add dev vxlan0 vni 120
 bridge vlan add dev vxlan0 vid 20 tunnel_info id 120
 ip link add vlan20 link br0 type vlan id 20
-ip addr add 192.168.20.253/24 dev vlan20
 ip link set vlan20 up
+ip link add link vlan10 dev sagvlan20 type macvlan
+ip link set dev sagvlan20 address 00:00:00:01:01:01
+ip addr add 192.168.20.253/24 dev sagvlan20
+ip link set sagvlan20 up
 
 # P2p links to leafs
 ip address add 10.2.1.5/31 dev eth1
@@ -50,6 +61,7 @@ ip address add 10.2.2.5/31 dev eth2
 
 # Bond to client
 ip link add dev bond0 type bond mode 802.3ad
+ip link set dev bond0 address 00:00:00:00:02:01
 ip link set dev bond0 up
 ip link set dev bond0 master br0
 bridge vlan add vid 20 dev bond0 pvid 20 egress untagged
@@ -63,6 +75,8 @@ ip link set dev eth3 up
 daemons = ["bgpd", "bfdd"]
 
 net = """
+evpn mh redirect-off
+!
 route-map ALLOW permit 1
 !
 route-map RM_L0 permit 2
@@ -73,7 +87,7 @@ route-map RM_AS_RANGE permit 3
 exit
 !
 interface bond0
- evpn mh es-id 00:00:00:00:00:00:00:00:00:02
+ evpn mh es-id 00:22:22:22:22:22:22:22:22:22
 exit
 !
 router bgp 65003
@@ -99,6 +113,7 @@ router bgp 65003
   neighbor SPINES route-map RM_AS_RANGE in
   neighbor SPINES route-map ALLOW out
   advertise-all-vni
+  advertise-default-gw
  exit-address-family
 exit
 !
