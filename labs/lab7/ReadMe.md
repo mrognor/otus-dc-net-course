@@ -1,5 +1,11 @@
 # VXLAN. Multihoming
 
+## Предисловие
+
+Несколько дней дебага привели меня к коллегам, которые сказали,
+что без доработок ванильный *frr* не сможет сделать такую схему.  
+Поэтому для этой лабы я взял нашу *Kornfeld OS*.
+
 ## Схема сети
 
 ![topology](images/lab7.1.png)
@@ -8,151 +14,230 @@
 Два спайна находятся в ASN 65000, а каждый лиф находится
 в своей ASN.
 
-## Конфигурация контейнеров
-В качестве контейнеров для лифов и спайнов использутеся тип **frr**.
-На них включены следующие демоны **frr**: bfdd, bgpd.  
-В качестве контейнеров клиентов используется тип **linux**.
-
 ## Настройка spine
-### Linux
-
-```bash
-ip route del default
-
-# Loopbacks
-ip link add dev loopback0 type dummy
-ip address add 10.0.1.0/32 dev loopback0
-ip link set dev loopback0 up
-
-# P2p links to leafs
-ip address add 10.2.1.0/31 dev eth1
-ip address add 10.2.1.2/31 dev eth2
-ip address add 10.2.1.4/31 dev eth3
-ip address add 10.2.1.6/31 dev eth4
-```
-
-Данная настройка удалит маршрут по умолчанию,
-создаст loopback0 и установит ip-адреса для p2p линков.
-
-### Frr
 
 ```ini
-route-map ALLOW permit 1
+configure terminal
 !
-route-map RM_L0 permit 2
- match interface loopback0
+hostname Spine1
 !
-route-map RM_AS_RANGE permit 3
- match as-path PF_AS_RANGE
-exit
+interface Loopback0
+ ip address 10.0.1.0/32
+!
+interface Ethernet1
+ ip address 10.2.1.0/31
+!
+interface Ethernet2
+ ip address 10.2.1.2/31
+!
+interface Ethernet3
+ ip address 10.2.1.4/31
+!
+interface Ethernet4
+ ip address 10.2.1.6/31
 !
 router bgp 65000
- bgp router-id 10.0.1.0
- neighbor LEAFS peer-group
- neighbor LEAFS remote-as external
- neighbor LEAFS bfd
- neighbor LEAFS password ebgp
- neighbor LEAFS timers 1 3
- bgp listen range 10.0.0.0/8 peer-group LEAFS
+ router-id 10.0.1.0
  !
  address-family ipv4 unicast
-  network 10.0.1.0/32
-  redistribute connected route-map RM_L0
-  neighbor LEAFS route-map RM_AS_RANGE in
-  neighbor LEAFS route-map ALLOW out
-  maximum-paths 4
- exit-address-family
+ network 10.0.1.0/32
  !
- address-family l2vpn evpn
-  neighbor LEAFS activate
-  neighbor LEAFS route-map RM_AS_RANGE in
-  neighbor LEAFS route-map ALLOW out
-  advertise-all-vni
- exit-address-family
-exit
-!
-bgp as-path access-list PF_AS_RANGE seq 5 permit 6500[1-9]
-!
+ peer-group Leafs
+  remote-as external
+  timers 1 3
+  bfd
+  password 123
+  !
+  address-family ipv4 unicast
+   activate
+  !
+  address-family l2vpn evpn
+    activate
+ !
+ neighbor 10.2.1.1
+  description Leaf1
+  peer-group Leafs
+ !
+ neighbor 10.2.1.3
+  description Leaf2
+  peer-group Leafs
+ !
+ neighbor 10.2.1.5
+  description Leaf3
+  peer-group Leafs
+ !
+ neighbor 10.2.1.7
+  description Leaf4
+  peer-group Leafs
+ !
 end
 ```
 
 Настраивается AS с номером 65000.  
 Для лифов создается peer-group, с базовыми настройками:
-аутентификация, bfd, timers.  
-В пир группу добавляется подсеть `10.0.0.0/8`.
+аутентификация, bfd, timers.
 
-Для underlay-сети используется `address-family ipv4 unicast`.  
-Будет происходить редистрибуция маршрута с loopback0.
-
-В overlay-сети будут распространяться все vni `advertise-all-vni`.
-
-Для корректной работы *eBGP* frr требует настройки политик распространения
-маршрутов. Выходить будут все маршруты, а приниматься только из `PF_AS_RANGE`
+Для underlay-сети используется `address-family ipv4 unicast`.
 
 ## Настройка leaf (leaf1)
-### Linux
 
-```bash
-ip route del default
-
-# Loopbacks
-ip link add dev loopback0 type dummy
-ip address add 10.0.0.1/32 dev loopback0
-ip link set dev loopback0 up
-
-# Bridge
-ip link add br0 type bridge vlan_filtering 1 vlan_default_pvid 0
-ip link add vxlan0 type vxlan dstport 4789 local 10.0.0.1 nolearning external vnifilter
-ip link set vxlan0 master br0
-ip link set br0 up
-ip link set vxlan0 up
-bridge link set dev vxlan0 vlan_tunnel on
-
-# l2vni 110 - vlan 10
-bridge vlan add dev br0 vid 10 self
-bridge vlan add dev vxlan0 vid 10
-bridge vni add dev vxlan0 vni 110
-bridge vlan add dev vxlan0 vid 10 tunnel_info id 110
-ip link add vlan10 link br0 type vlan id 10
-ip addr add 192.168.10.254/24 dev vlan10
-ip link set vlan10 up
-
-# l2vni 120 - vlan 20
-bridge vlan add dev br0 vid 20 self
-bridge vlan add dev vxlan0 vid 20
-bridge vni add dev vxlan0 vni 120
-bridge vlan add dev vxlan0 vid 20 tunnel_info id 120
-ip link add vlan20 link br0 type vlan id 20
-ip addr add 192.168.20.254/24 dev vlan20
-ip link set vlan20 up
-
-# P2p links to leafs
-ip address add 10.2.1.1/31 dev eth1
-ip address add 10.2.2.1/31 dev eth2
-
-# Bond to client
-ip link add dev bond0 type bond mode 802.3ad
-ip link set dev bond0 up
-ip link set dev bond0 master br0
-bridge vlan add vid 10 dev bond0 pvid 10 egress untagged
-
-ip link set dev eth3 down
-ip link set dev eth3 master bond0
-ip link set dev eth3 up
+```ini
+configure terminal
+!
+hostname Leaf1
+!
+ip anycast-mac-address 02:aa:aa:aa:aa:aa
+ip anycast-address enable
+!
+vlan 10
+ exit
+!
+vlan 20
+ exit
+!
+interface Loopback0
+ ip address 10.0.0.1/32
+!
+interface Vlan10
+ ip address 192.168.10.253/24
+ ip anycast-address 192.168.10.254/24
+ no autostate
+!
+interface Vlan20
+ ip address 192.168.20.253/24
+ ip anycast-address 192.168.20.254/24
+ no autostate
+!
+interface PortChannel1 min-links 1 mode active fast_rate
+ mac-address 00:00:5E:00:52:01
+ description Host1
+ switchport access Vlan 10
+ evpn ethernet-segment id 00:11:11:11:11:11:11:11:11:11
+ no shutdown
+!
+interface Ethernet1
+ ip address 10.2.1.1/31
+!
+interface Ethernet2
+ ip address 10.2.2.1/31
+!
+interface Ethernet3
+ channel-group 1
+ no shutdown
+!
+router bgp 65001
+ router-id 10.0.0.1
+ !
+ address-family ipv4 unicast
+  network 10.0.0.1/32
+ !
+ address-family l2vpn evpn
+  advertise-all-vni
+ !
+ peer-group Spines
+ !
+   remote-as external
+   timers 1 3
+   bfd
+   password 123
+   !
+  address-family l2vpn evpn
+    activate
+  !
+  address-family ipv4 unicast
+   activate
+ !
+ neighbor 10.2.1.0
+  description Spine1
+  peer-group Spines
+ !
+ neighbor 10.2.2.0
+  description Spine2
+  peer-group Spines
+!
+vlan 10
+vlan 20
+!
+interface vxlan vtep1
+ source-ip 10.0.0.1
+ map vni 1010 vlan 10
+ map vni 1020 vlan 20
+!
+end
 ```
 
-Данная настройка удалит маршрут по умолчанию,
-создаст loopback0 и установит ip-адрес для p2p линка.
+Для работы multihoming настраивается sag, он нужен для того,
+чтобы на виртуальных машинах работал default gw.  
+Mac адрес будет назначен везде одинаковым,а ip-адреса назначаются
+одинаковыми для vlan.
+Svi ip нужен для работы underlay-сети.
 
-Для работы overlay-сети будет создан bridge и
-vxlan-интерфейс в режиме single vxlan device.  
+Для клиентского линка настраивается portchannel
 
-Будет настроено соотношение между vni 10000 и vlan 1000.
-Svi для vlan будет помещен в vrf10000. Это служебный vni,
-для работы симметричного IRB.
+```ini
+interface PortChannel1 min-links 1 mode active fast_rate
+ mac-address 00:00:5E:00:52:01
+ switchport access Vlan 10
+ evpn ethernet-segment id 00:11:11:11:11:11:11:11:11:11
+ no shutdown
+```
 
-Для работы с клиентами настроится маппинг между vni 10010
-и vlan 10. На svi для vlan будет назначен ip-адрес 192.168.10.254,
-а также он будет помещен в vrf10000.
+Для него устанавливается mac, одинаковый на двух лифах. Он будет использоваться в lacp,
+чтобы клиент считал, что это одно устройство.  
+Также на portchannel настраивается ESI, для RT-1 маршрутов.
 
-Для линка в сторону клиента будет назначен vlan 10.
+## Настройка client (t1)
+
+```bash
+ip link set dev eth1 down
+ip link set dev eth2 down
+ip link add bond0 type bond mode 802.3ad lacp_rate fast
+ip link set dev bond0 addr 00:00:00:00:00:01
+ip link set eth1 master bond0
+ip link set eth2 master bond0
+ip link set dev bond0 up
+ip addr add 192.168.10.1/24 dev bond0
+ip route replace default via 192.168.10.254
+```
+
+Два интерфейса в сторону лифов добавляются в бонд.
+Для бонда используется режим 802.3ad - lacp.  
+В качестве маршрута по умолчанию указывается sag.
+
+## Проверка
+
+T1 может достучаться до T2:
+
+![alt text](images/lab7.2.png)
+
+На leaf1 есть RT-2 маршруты для первого клиента, изученные локально
+
+![alt text](images/lab7.3.png)
+
+Leaf1 является DF
+
+![alt text](images/lab7.4.png)
+
+На leaf1 есть RT-2 маршруты для первого клиента, изученные на leaf2
+
+![alt text](images/lab7.5.png)
+
+Это можно понять по наличию ASN 650002, которая соответсвует leaf2.
+
+На leaf1 есть RT-2 маршруты для второго клиента, изученные на leaf3 и leaf4
+
+![alt text](images/lab7.6.png)
+
+![alt text](images/lab7.7.png)
+
+### Проверка отказоустойчивости
+
+Пустим пинг с t1 на t2. Он пойдет через 
+
+![alt text](images/lab7.8.png)
+
+Пакеты балансируются и ходят через 2 лифа.
+
+Отключим leaf1 и проверим пакеты:
+
+![alt text](images/lab7.9.png)
