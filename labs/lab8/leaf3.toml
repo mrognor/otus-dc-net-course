@@ -1,0 +1,161 @@
+node_name = "leaf3"
+node_type = "frr"
+
+[links.eth1]
+neigh = "spine1"
+iface = "eth3"
+
+[links.eth2]
+neigh = "spine2"
+iface = "eth3"
+
+[links.eth3]
+neigh = "f"
+iface = "eth1"
+
+[linux]
+net = """
+ip route del default
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+
+# Loopbacks
+ip link add dev loopback0 type dummy
+ip address add 10.0.0.3/32 dev loopback0
+ip link set dev loopback0 up
+
+# P2p links to NEIGHBOURS
+ip address add 10.2.1.5/31 dev eth1
+ip address add 10.2.2.5/31 dev eth2
+
+# Bridge
+ip link add br0 type bridge vlan_filtering 1 vlan_default_pvid 0
+ip link add vxlan0 type vxlan dstport 4789 local 10.0.0.3 nolearning external vnifilter
+ip link set vxlan0 master br0
+ip link set br0 up
+ip link set vxlan0 up
+bridge link set dev vxlan0 vlan_tunnel on
+
+# vrf for l3vni 10000
+ip link add vrf10000 type vrf table 10000
+ip link set vrf10000 up
+
+# vrf for l3vni 20000
+ip link add vrf20000 type vrf table 20000
+ip link set vrf20000 up
+
+# l3vni 10000 - vlan 1000
+bridge vlan add dev br0 vid 1000 self
+bridge vlan add dev vxlan0 vid 1000
+bridge vni add dev vxlan0 vni 10000
+bridge vlan add dev vxlan0 vid 1000 tunnel_info id 10000
+ip link add vlan1000 link br0 type vlan id 1000
+ip link set vlan1000 master vrf10000
+ip link set vlan1000 up
+
+# l2vni 10010 - vlan 10
+bridge vlan add dev br0 vid 10 self
+bridge vlan add dev vxlan0 vid 10
+bridge vni add dev vxlan0 vni 10010
+bridge vlan add dev vxlan0 vid 10 tunnel_info id 10010
+ip link add vlan10 link br0 type vlan id 10
+ip link set vlan10 master vrf10000
+ip addr add 192.168.10.253/24 dev vlan10
+ip link set vlan10 up
+
+# l2vni 10030 - vlan 30
+bridge vlan add dev br0 vid 30 self
+bridge vlan add dev vxlan0 vid 30
+bridge vni add dev vxlan0 vni 10030
+bridge vlan add dev vxlan0 vid 30 tunnel_info id 10030
+ip link add vlan30 link br0 type vlan id 30
+ip link set vlan30 master vrf10000
+ip addr add 192.168.30.253/24 dev vlan30
+ip link set vlan30 up
+
+# l3vni 20000 - vlan 2000
+bridge vlan add dev br0 vid 2000 self
+bridge vlan add dev vxlan0 vid 2000
+bridge vni add dev vxlan0 vni 20000
+bridge vlan add dev vxlan0 vid 2000 tunnel_info id 20000
+ip link add vlan2000 link br0 type vlan id 2000
+ip link set vlan2000 master vrf20000
+ip link set vlan2000 up
+
+# l2vni 20020 - vlan 20
+bridge vlan add dev br0 vid 20 self
+bridge vlan add dev vxlan0 vid 20
+bridge vni add dev vxlan0 vni 20020
+bridge vlan add dev vxlan0 vid 20 tunnel_info id 20020
+ip link add vlan20 link br0 type vlan id 20
+ip link set vlan20 master vrf20000
+ip addr add 192.168.20.253/24 dev vlan20
+ip link set vlan20 up
+
+# l2vni 20040 - vlan 40
+bridge vlan add dev br0 vid 40 self
+bridge vlan add dev vxlan0 vid 40
+bridge vni add dev vxlan0 vni 20040
+bridge vlan add dev vxlan0 vid 40 tunnel_info id 20040
+ip link add vlan40 link br0 type vlan id 40
+ip link set vlan40 master vrf20000
+ip addr add 192.168.40.253/24 dev vlan40
+ip link set vlan40 up
+
+# Link to firewall
+ip address add 10.168.0.0/31 dev eth3
+"""
+
+[frr]
+daemons = ["bgpd", "bfdd"]
+
+net = """
+vrf vrf10000
+ vni 10000
+exit-vrf
+!
+vrf vrf20000
+ vni 20000
+exit-vrf
+!
+router bgp 65000
+ bgp router-id 10.0.0.3
+ neighbor NEIGHBOURS peer-group
+ neighbor NEIGHBOURS remote-as internal
+ neighbor NEIGHBOURS bfd
+ neighbor NEIGHBOURS password ibgp
+ neighbor NEIGHBOURS timers 1 3
+ neighbor 10.2.1.4 peer-group NEIGHBOURS
+ neighbor 10.2.2.4 peer-group NEIGHBOURS
+ neighbor 10.168.0.1 peer-group NEIGHBOURS
+ !
+ address-family ipv4 unicast
+  network 10.0.0.3/32
+  neighbor NEIGHBOURS route-reflector-client
+  neighbor NEIGHBOURS next-hop-self force
+  maximum-paths ibgp 4
+ exit-address-family
+ !
+ address-family l2vpn evpn
+  neighbor NEIGHBOURS activate
+  neighbor NEIGHBOURS route-reflector-client
+  advertise-all-vni
+  advertise-svi-ip
+ exit-address-family
+exit
+!
+router bgp 65000 vrf vrf10000
+ !
+ address-family l2vpn evpn
+  advertise ipv4 unicast
+ exit-address-family
+exit
+!
+router bgp 65000 vrf vrf20000
+ !
+ address-family l2vpn evpn
+  advertise ipv4 unicast
+ exit-address-family
+exit
+!
+end
+"""
