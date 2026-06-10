@@ -241,7 +241,7 @@ end
 Для overlay-сети настраивается vrf20000, в рамках которого также
 будет распространятся l2vpn маршруты.
 
-## Настройка firewall (f)
+## Настройка leaf (leaf3)
 ### Linux
 
 ```bash
@@ -250,15 +250,16 @@ sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
 # Loopbacks
 ip link add dev loopback0 type dummy
-ip address add 10.0.0.255/32 dev loopback0
+ip address add 10.0.0.3/32 dev loopback0
 ip link set dev loopback0 up
 
-# P2p link to leaf
-ip address add 10.168.0.1/31 dev eth1
+# P2p links to NEIGHBOURS
+ip address add 10.2.1.5/31 dev eth1
+ip address add 10.2.2.5/31 dev eth2
 
 # Bridge
 ip link add br0 type bridge vlan_filtering 1 vlan_default_pvid 0
-ip link add vxlan0 type vxlan dstport 4789 local 10.0.0.255 nolearning external vnifilter
+ip link add vxlan0 type vxlan dstport 4789 local 10.0.0.3 nolearning external vnifilter
 ip link set vxlan0 master br0
 ip link set br0 up
 ip link set vxlan0 up
@@ -288,7 +289,7 @@ bridge vni add dev vxlan0 vni 10010
 bridge vlan add dev vxlan0 vid 10 tunnel_info id 10010
 ip link add vlan10 link br0 type vlan id 10
 ip link set vlan10 master vrf10000
-ip addr add 192.168.10.252/24 dev vlan10
+ip addr add 192.168.10.253/24 dev vlan10
 ip link set vlan10 up
 
 # l2vni 10030 - vlan 30
@@ -298,7 +299,7 @@ bridge vni add dev vxlan0 vni 10030
 bridge vlan add dev vxlan0 vid 30 tunnel_info id 10030
 ip link add vlan30 link br0 type vlan id 30
 ip link set vlan30 master vrf10000
-ip addr add 192.168.30.252/24 dev vlan30
+ip addr add 192.168.30.253/24 dev vlan30
 ip link set vlan30 up
 
 # l3vni 20000 - vlan 2000
@@ -317,7 +318,7 @@ bridge vni add dev vxlan0 vni 20020
 bridge vlan add dev vxlan0 vid 20 tunnel_info id 20020
 ip link add vlan20 link br0 type vlan id 20
 ip link set vlan20 master vrf20000
-ip addr add 192.168.20.252/24 dev vlan20
+ip addr add 192.168.20.253/24 dev vlan20
 ip link set vlan20 up
 
 # l2vni 20040 - vlan 40
@@ -327,11 +328,23 @@ bridge vni add dev vxlan0 vni 20040
 bridge vlan add dev vxlan0 vid 40 tunnel_info id 20040
 ip link add vlan40 link br0 type vlan id 40
 ip link set vlan40 master vrf20000
-ip addr add 192.168.40.252/24 dev vlan40
+ip addr add 192.168.40.253/24 dev vlan40
 ip link set vlan40 up
+
+# Link to firewall
+ip link add link eth3 name eth3.1000 type vlan id 1000
+ip link set eth3.1000 master vrf10000
+ip address add 10.169.0.0/31 dev eth3.1000
+ip link set eth3.1000 up
+ip link add link eth3 name eth3.2000 type vlan id 2000
+ip link set eth3.2000 master vrf20000
+ip address add 10.170.0.0/31 dev eth3.2000
+ip link set eth3.2000 up
 ```
 
-На firewall будут заведены все vni, так как будет осуществляться `route leaking`.
+На leaf-3 заводятся все vni. Для связи с firewall требуется использовать bgp
+в двух vrf, поэтому будут созданы два vlan-интерфейса и помещены в vrf.
+Vlan id у них будет соответствовать vlan для vrf.
 
 ### Frr
 
@@ -345,31 +358,42 @@ vrf vrf20000
 exit-vrf
 !
 router bgp 65000
- bgp router-id 10.0.0.255
- neighbor NEIGHBOURS peer-group
- neighbor NEIGHBOURS remote-as internal
- neighbor NEIGHBOURS bfd
- neighbor NEIGHBOURS password ibgp
- neighbor NEIGHBOURS timers 1 3
- neighbor 10.168.0.0 peer-group NEIGHBOURS
+ bgp router-id 10.0.0.3
+ neighbor SPINES peer-group
+ neighbor SPINES remote-as internal
+ neighbor SPINES bfd
+ neighbor SPINES password ibgp
+ neighbor SPINES timers 1 3
+ neighbor 10.2.1.4 peer-group SPINES
+ neighbor 10.2.2.4 peer-group SPINES
  !
  address-family ipv4 unicast
-  network 10.0.0.255/32
+  network 10.0.0.3/32
+  neighbor SPINES route-reflector-client
+  neighbor SPINES next-hop-self force
   maximum-paths ibgp 4
  exit-address-family
  !
  address-family l2vpn evpn
-  neighbor NEIGHBOURS activate
+  neighbor SPINES activate
+  neighbor SPINES route-reflector-client
   advertise-all-vni
   advertise-svi-ip
  exit-address-family
 exit
 !
 router bgp 65000 vrf vrf10000
+ bgp router-id 10.0.0.3
+ neighbor FIREWALL peer-group
+ neighbor FIREWALL remote-as internal
+ neighbor FIREWALL bfd
+ neighbor FIREWALL password ibgp
+ neighbor FIREWALL timers 1 3
+ neighbor 10.169.0.1 peer-group FIREWALL
  !
  address-family ipv4 unicast
-  redistribute connected
-  import vrf vrf20000
+  network 10.0.0.3/32
+  maximum-paths ibgp 4
  exit-address-family
  !
  address-family l2vpn evpn
@@ -378,10 +402,17 @@ router bgp 65000 vrf vrf10000
 exit
 !
 router bgp 65000 vrf vrf20000
+ bgp router-id 10.0.0.3
+ neighbor FIREWALL peer-group
+ neighbor FIREWALL remote-as internal
+ neighbor FIREWALL bfd
+ neighbor FIREWALL password ibgp
+ neighbor FIREWALL timers 1 3
+ neighbor 10.170.0.1 peer-group FIREWALL
  !
  address-family ipv4 unicast
-  redistribute connected
-  import vrf vrf10000
+  network 10.0.0.3/32
+  maximum-paths ibgp 4
  exit-address-family
  !
  address-family l2vpn evpn
@@ -392,10 +423,99 @@ exit
 end
 ```
 
+Для firewall настраивается отдельный bgp инстанс на каждый vrf. Его настройки
+аналогичны bgp для grt.
+
+## Настройка firewall (f)
+### Linux
+
+```bash
+ip route del default
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+
+# vrf for l3vni 10000
+ip link add vrf10000 type vrf table 10000
+ip link set vrf10000 up
+
+# vrf for l3vni 20000
+ip link add vrf20000 type vrf table 20000
+ip link set vrf20000 up
+
+# P2p link to leaf
+ip link add link eth1 name eth1.1000 type vlan id 1000
+ip link set eth1.1000 master vrf10000
+ip link set eth1.1000 up
+ip address add 10.169.0.1/31 dev eth1.1000
+ip link add link eth1 name eth1.2000 type vlan id 2000
+ip link set eth1.2000 master vrf20000
+ip address add 10.170.0.1/31 dev eth1.2000
+ip link set eth1.2000 up
+```
+
+На firewall будут созданы все vrf. Для каждого vrf будет создан vlan-сабинтерфейс,
+с соответсвующим vrf vlan id.
+
+### Frr
+
+```ini
+route-map RM_FW permit 1
+ match ip address AL_FW
+exit
+!
+vrf vrf10000
+exit-vrf
+!
+vrf vrf20000
+exit-vrf
+!
+router bgp 65000 vrf vrf10000
+ bgp router-id 10.0.0.255
+ neighbor LEAF peer-group
+ neighbor LEAF remote-as internal
+ neighbor LEAF bfd
+ neighbor LEAF password ibgp
+ neighbor LEAF timers 1 3
+ neighbor 10.169.0.0 peer-group LEAF
+ !
+ address-family ipv4 unicast
+  network 10.0.0.255/32
+  maximum-paths ibgp 4
+  redistribute connected route-map RM_FW
+  import vrf vrf20000
+ exit-address-family
+exit
+!
+router bgp 65000 vrf vrf20000
+ bgp router-id 10.0.0.255
+ neighbor LEAF peer-group
+ neighbor LEAF remote-as internal
+ neighbor LEAF bfd
+ neighbor LEAF password ibgp
+ neighbor LEAF timers 1 3
+ neighbor 10.170.0.0 peer-group LEAF
+ !
+ address-family ipv4 unicast
+  network 10.0.0.255/32
+  maximum-paths ibgp 4
+  redistribute connected route-map RM_FW
+  import vrf vrf10000
+ exit-address-family
+exit
+!
+access-list AL_FW seq 5 permit 192.168.10.0/24
+access-list AL_FW seq 10 permit 192.168.20.0/24
+access-list AL_FW seq 15 permit 192.168.30.0/24
+access-list AL_FW seq 20 permit 192.168.40.0/24
+!
+end
+```
+
 Для передачи маршрутов из одного vrf, в другой используется команда
 `import vrf vrfN`.  
-Дополнительно включена редистрибуция подключенных маршрутов, чтобы
-решить проблему с "тихими" хостами.
+Распространение маршрутов по bgp будет происходить с помощью опции
+`redistribute connected`, на которую будет дополнительно
+добавляться ограничение RM_FW и AL_FW. Это позволит передавать только
+интересующие нас подсети.
 
 ## Клиент (t1)
 

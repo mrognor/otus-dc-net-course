@@ -10,22 +10,6 @@ net = """
 ip route del default
 sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
-# Loopbacks
-ip link add dev loopback0 type dummy
-ip address add 10.0.0.255/32 dev loopback0
-ip link set dev loopback0 up
-
-# P2p link to leaf
-ip address add 10.168.0.1/31 dev eth1
-
-# Bridge
-ip link add br0 type bridge vlan_filtering 1 vlan_default_pvid 0
-ip link add vxlan0 type vxlan dstport 4789 local 10.0.0.255 nolearning external vnifilter
-ip link set vxlan0 master br0
-ip link set br0 up
-ip link set vxlan0 up
-bridge link set dev vxlan0 vlan_tunnel on
-
 # vrf for l3vni 10000
 ip link add vrf10000 type vrf table 10000
 ip link set vrf10000 up
@@ -34,121 +18,69 @@ ip link set vrf10000 up
 ip link add vrf20000 type vrf table 20000
 ip link set vrf20000 up
 
-# l3vni 10000 - vlan 1000
-bridge vlan add dev br0 vid 1000 self
-bridge vlan add dev vxlan0 vid 1000
-bridge vni add dev vxlan0 vni 10000
-bridge vlan add dev vxlan0 vid 1000 tunnel_info id 10000
-ip link add vlan1000 link br0 type vlan id 1000
-ip link set vlan1000 master vrf10000
-ip link set vlan1000 up
-
-# l2vni 10010 - vlan 10
-bridge vlan add dev br0 vid 10 self
-bridge vlan add dev vxlan0 vid 10
-bridge vni add dev vxlan0 vni 10010
-bridge vlan add dev vxlan0 vid 10 tunnel_info id 10010
-ip link add vlan10 link br0 type vlan id 10
-ip link set vlan10 master vrf10000
-ip addr add 192.168.10.252/24 dev vlan10
-ip link set vlan10 up
-
-# l2vni 10030 - vlan 30
-bridge vlan add dev br0 vid 30 self
-bridge vlan add dev vxlan0 vid 30
-bridge vni add dev vxlan0 vni 10030
-bridge vlan add dev vxlan0 vid 30 tunnel_info id 10030
-ip link add vlan30 link br0 type vlan id 30
-ip link set vlan30 master vrf10000
-ip addr add 192.168.30.252/24 dev vlan30
-ip link set vlan30 up
-
-# l3vni 20000 - vlan 2000
-bridge vlan add dev br0 vid 2000 self
-bridge vlan add dev vxlan0 vid 2000
-bridge vni add dev vxlan0 vni 20000
-bridge vlan add dev vxlan0 vid 2000 tunnel_info id 20000
-ip link add vlan2000 link br0 type vlan id 2000
-ip link set vlan2000 master vrf20000
-ip link set vlan2000 up
-
-# l2vni 20020 - vlan 20
-bridge vlan add dev br0 vid 20 self
-bridge vlan add dev vxlan0 vid 20
-bridge vni add dev vxlan0 vni 20020
-bridge vlan add dev vxlan0 vid 20 tunnel_info id 20020
-ip link add vlan20 link br0 type vlan id 20
-ip link set vlan20 master vrf20000
-ip addr add 192.168.20.252/24 dev vlan20
-ip link set vlan20 up
-
-# l2vni 20040 - vlan 40
-bridge vlan add dev br0 vid 40 self
-bridge vlan add dev vxlan0 vid 40
-bridge vni add dev vxlan0 vni 20040
-bridge vlan add dev vxlan0 vid 40 tunnel_info id 20040
-ip link add vlan40 link br0 type vlan id 40
-ip link set vlan40 master vrf20000
-ip addr add 192.168.40.252/24 dev vlan40
-ip link set vlan40 up
+# P2p link to leaf
+ip link add link eth1 name eth1.1000 type vlan id 1000
+ip link set eth1.1000 master vrf10000
+ip link set eth1.1000 up
+ip address add 10.169.0.1/31 dev eth1.1000
+ip link add link eth1 name eth1.2000 type vlan id 2000
+ip link set eth1.2000 master vrf20000
+ip address add 10.170.0.1/31 dev eth1.2000
+ip link set eth1.2000 up
 """
 
 [frr]
 daemons = ["bgpd", "bfdd"]
 
 net = """
+route-map RM_FW permit 1
+ match ip address AL_FW
+exit
+!
 vrf vrf10000
- vni 10000
 exit-vrf
 !
 vrf vrf20000
- vni 20000
 exit-vrf
 !
-router bgp 65000
+router bgp 65000 vrf vrf10000
  bgp router-id 10.0.0.255
- neighbor NEIGHBOURS peer-group
- neighbor NEIGHBOURS remote-as internal
- neighbor NEIGHBOURS bfd
- neighbor NEIGHBOURS password ibgp
- neighbor NEIGHBOURS timers 1 3
- neighbor 10.168.0.0 peer-group NEIGHBOURS
+ neighbor LEAF peer-group
+ neighbor LEAF remote-as internal
+ neighbor LEAF bfd
+ neighbor LEAF password ibgp
+ neighbor LEAF timers 1 3
+ neighbor 10.169.0.0 peer-group LEAF
  !
  address-family ipv4 unicast
   network 10.0.0.255/32
   maximum-paths ibgp 4
- exit-address-family
- !
- address-family l2vpn evpn
-  neighbor NEIGHBOURS activate
-  advertise-all-vni
-  advertise-svi-ip
- exit-address-family
-exit
-!
-router bgp 65000 vrf vrf10000
- !
- address-family ipv4 unicast
-  redistribute connected
+  redistribute connected route-map RM_FW
   import vrf vrf20000
- exit-address-family
- !
- address-family l2vpn evpn
-  advertise ipv4 unicast
  exit-address-family
 exit
 !
 router bgp 65000 vrf vrf20000
+ bgp router-id 10.0.0.255
+ neighbor LEAF peer-group
+ neighbor LEAF remote-as internal
+ neighbor LEAF bfd
+ neighbor LEAF password ibgp
+ neighbor LEAF timers 1 3
+ neighbor 10.170.0.0 peer-group LEAF
  !
  address-family ipv4 unicast
-  redistribute connected
+  network 10.0.0.255/32
+  maximum-paths ibgp 4
+  redistribute connected route-map RM_FW
   import vrf vrf10000
  exit-address-family
- !
- address-family l2vpn evpn
-  advertise ipv4 unicast
- exit-address-family
 exit
+!
+access-list AL_FW seq 5 permit 192.168.10.0/24
+access-list AL_FW seq 10 permit 192.168.20.0/24
+access-list AL_FW seq 15 permit 192.168.30.0/24
+access-list AL_FW seq 20 permit 192.168.40.0/24
 !
 end
 """
