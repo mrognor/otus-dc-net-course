@@ -1,3 +1,6 @@
 /labs/lab*/configs/
 /labs/lab*/lab.clab.yaml
 /labs/lab*/clab-lab
+/docs/_build/
+/docs/_static/
+/docs/_templates/
