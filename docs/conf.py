@@ -14,9 +14,14 @@ release = '0.0.1'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = []
+extensions = [
+    'sphinxcontrib.plantuml',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.extlinks',
+    'sphinx_tabs.tabs'
+]
 
-templates_path = ['_templates']
+templates_path = ['templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 language = 'ru'
