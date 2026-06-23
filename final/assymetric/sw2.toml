@@ -42,6 +42,7 @@ bridge vlan add dev vxlan0 vid 10
 bridge vni add dev vxlan0 vni 110
 bridge vlan add dev vxlan0 vid 10 tunnel_info id 110
 ip link add vlan10 link br0 type vlan id 10
+ip link set dev vlan10 address 00:00:00:10:00:02
 ip addr add 192.168.10.253/24 dev vlan10
 ip link set vlan10 up
 
@@ -51,6 +52,7 @@ bridge vlan add dev vxlan0 vid 20
 bridge vni add dev vxlan0 vni 120
 bridge vlan add dev vxlan0 vid 20 tunnel_info id 120
 ip link add vlan20 link br0 type vlan id 20
+ip link set dev vlan20 address 00:00:00:20:00:02
 ip addr add 192.168.20.253/24 dev vlan20
 ip link set vlan20 up
 
