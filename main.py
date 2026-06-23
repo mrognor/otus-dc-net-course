@@ -7,8 +7,8 @@ from jinja2 import Environment, FileSystemLoader
 
 from pydantic import BaseModel, field_serializer
 
-configs_path = "labs/lab8"
-lab_path = "labs/lab8"
+configs_path = "final/assymetric"
+lab_path = "final/assymetric"
 
 NodeType = Literal["linux", "frr"]
 FrrDaemon = Literal["bfdd", "ospfd", "ospf6d", "isisd", "bgpd"]

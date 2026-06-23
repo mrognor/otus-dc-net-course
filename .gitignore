@@ -4,3 +4,6 @@
 /docs/_build/
 /docs/_static/
 /docs/_templates/
+/final/*/configs/
+/final/*/*.yaml
+/final/*/clab-lab

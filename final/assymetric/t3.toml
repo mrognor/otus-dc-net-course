@@ -1,0 +1,17 @@
+node_name = "t3"
+node_type = "linux"
+lldpd.enable = false
+
+[links.eth1]
+neigh = "sw2"
+iface = "eth3"
+
+[linux]
+net = """
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+
+ip link set dev eth1 address 00:00:00:01:00:03
+ip addr add 192.168.20.1/24 dev eth1
+
+ip route replace default via 192.168.20.253 dev eth1
+"""

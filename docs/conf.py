@@ -18,7 +18,8 @@ extensions = [
     'sphinxcontrib.plantuml',
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
-    'sphinx_tabs.tabs'
+    'sphinx_tabs.tabs',
+    'sphinxmermaid'
 ]
 
 templates_path = ['templates']
@@ -31,3 +32,9 @@ language = 'ru'
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+sphinxmermaid_mermaid_init = {
+  'packet': {
+    'showBits': False
+  }
+}
