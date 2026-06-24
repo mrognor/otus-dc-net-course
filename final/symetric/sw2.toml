@@ -43,6 +43,7 @@ bridge vni add dev vxlan0 vni 11000
 bridge vlan add dev vxlan0 vid 1100 tunnel_info id 11000
 ip link add vlan1100 link br0 type vlan id 1100
 ip link set vlan1100 master vrf11000
+ip link set dev vlan1100 address 00:00:11:00:00:02
 ip link set vlan1100 up
 
 # l2vni 120 - vlan 20
@@ -52,7 +53,7 @@ bridge vni add dev vxlan0 vni 120
 bridge vlan add dev vxlan0 vid 20 tunnel_info id 120
 ip link add vlan20 link br0 type vlan id 20
 ip link set vlan20 master vrf11000
-ip link set dev vlan20 address 00:00:00:20:00:02
+ip link set dev vlan20 address 00:00:00:20:00:01
 ip addr add 192.168.20.254/24 dev vlan20
 ip link set vlan20 up
 
@@ -84,14 +85,6 @@ router bgp 65000
 exit
 !
 router bgp 65000 vrf vrf11000
- !
- address-family ipv4 unicast
-  redistribute connected
- exit-address-family
- !
- address-family ipv6 unicast
-  redistribute connected
- exit-address-family
  !
  address-family l2vpn evpn
   advertise ipv4 unicast
